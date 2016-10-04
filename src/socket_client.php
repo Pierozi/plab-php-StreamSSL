@@ -11,12 +11,18 @@ class Client
      */
     const ENCRYPTION_TLS    = STREAM_CRYPTO_METHOD_TLS_CLIENT;
 
+    protected $context;
+
     /**
      * Constructor
      * @param $uri
      */
-    public function __construct($uri) {
+    public function __construct($uri, $context = null) {
         $this->uri = $uri;
+
+        if (null !== $context) {
+            $this->context = stream_context_create($context);
+        }
     }
 
     /**
@@ -65,8 +71,11 @@ class Client
      * @param $command
      */
     protected function send($command) {
-        $client = stream_socket_client($this->uri, $errorCode, $errorString, 30,
-            STREAM_CLIENT_CONNECT);
+        if (null !== $this->context) {
+            $client = stream_socket_client($this->uri, $errorCode, $errorString, 30, STREAM_CLIENT_CONNECT, $this->context);
+        } else {
+            $client = stream_socket_client($this->uri, $errorCode, $errorString, 30, STREAM_CLIENT_CONNECT);
+        }
 
         if (!is_resource($client)) {
             echo 'Could not connect, ', $errorString, PHP_EOL;
